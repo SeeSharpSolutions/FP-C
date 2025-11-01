@@ -1,3 +1,5 @@
+using CPR.API.Services;
+using CPR.API.Services.Interfaces;
 using Microsoft.OpenApi.Models;
 
 namespace CPR.API
@@ -42,6 +44,12 @@ namespace CPR.API
                 c.AddSecurityRequirement(securityRequirement);
                 c.CustomSchemaIds(x => x.FullName);
             });
+            IConfiguration Configuration = new ConfigurationBuilder()
+                           .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                           .AddUserSecrets<Program>()
+                           .Build();
+            builder.Services.AddSingleton(Configuration);
+            builder.Services.AddTransient<IAstuteService, AstuteService>(); 
             builder.Services.AddOpenApi();
             var app = builder.Build();
             if (app.Environment.IsDevelopment())
