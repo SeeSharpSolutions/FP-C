@@ -1,3 +1,4 @@
+using CPR.API.Common;
 using CPR.API.Data;
 using CPR.API.Data.Interfaces;
 using CPR.API.Services;
@@ -25,7 +26,7 @@ namespace CPR.API
                     "v1",
                     new OpenApiInfo
                     {
-                        Title = "Ondemand API",
+                        Title = "Client Portfolio Retrieval",
                         Version = "v1.0.0",
                         Description = "1.0.0"
                     }
@@ -54,13 +55,7 @@ namespace CPR.API
             });
             
             builder.Services.AddSingleton(Configuration);
-            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddTransient<IAstuteService, AstuteService>();
-            builder.Services.AddTransient<ILightstoneService, LightstoneService>();
-            builder.Services.AddTransient<IClientService, ClientService>();
-            builder.Services.AddTransient<IPropertyService, PropertyService>();
-            builder.Services.AddTransient<IAstureRequestService, AstureRequestService>();
+            builder.Services.AddMyDependencies();
             builder.Services.AddOpenApi();
             var app = builder.Build();
             if (app.Environment.IsDevelopment())

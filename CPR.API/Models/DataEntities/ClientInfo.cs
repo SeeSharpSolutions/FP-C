@@ -10,5 +10,7 @@
         public string Email { get; set; } = string.Empty;
         public ICollection<PropertyInfo> Properties { get; set; }   
         public ICollection<AstuteRequest> AstuteRequests { get; set; }
+        public ICollection<VehicleInfo> Vehicles { get; set; }
+        public ICollection<PolicyInfo> Policies { get; set; }
     }
 }

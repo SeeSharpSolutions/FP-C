@@ -34,6 +34,7 @@ namespace CPR.API.Services
 
         public async Task<object> GetPortfolio(PortfolioPayload portfolioPayload)
         {
+            #region CCPRequest
             Guid msgId = Guid.NewGuid();
             var item = portfolioPayload.GetPortfolio();
             using OperationContextScope scope = new(_client.InnerChannel);
@@ -41,6 +42,10 @@ namespace CPR.API.Services
             p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, _userAgent);
             OperationContext.Current.OutgoingMessageProperties.Add(HttpRequestMessageProperty.Name, p);
             var result = await _client.PerformCcpRequestAsync(item, msgId, null);
+            string message = result?.Result?.CompletionCode.ToString();
+            #endregion CCPRequest
+
+            #region GetAddClient
             // Get client
             var clients = await _clientService.FindAsync(x => x.IdNumber == portfolioPayload.IdNumber);
             ClientInfo client = null;
@@ -51,8 +56,9 @@ namespace CPR.API.Services
                 clients = await _clientService.FindAsync(x => x.IdNumber == portfolioPayload.IdNumber);
             }
             client = clients.FirstOrDefault();
-            string message = result?.Result?.CompletionCode.ToString();
+            #endregion GetAddClient
 
+            #region AstuteRequest
             AstuteRequest request = new()
             {
                 ClientInfoId = client.Id,
@@ -61,7 +67,8 @@ namespace CPR.API.Services
                 Message = !string.IsNullOrEmpty(message) ? message : "Error Result NULL."
             };
             await _astureRequestService.AddAsync(request);
-            await GetHeaders(msgId);
+            #endregion AstuteRequest
+            
             return result;
         }
 
