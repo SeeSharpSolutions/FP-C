@@ -10,31 +10,39 @@ namespace CPR.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [ApiKeyAuth]
-    public class AstuteController : ControllerBase
+    public class AstuteController(IAstuteService astuteService) : ControllerBase
     {
-        private readonly IAstuteService _AstuteService;
-
-        public AstuteController(IAstuteService astuteService)
-        {
-            _AstuteService = astuteService;
-        }
+        private const string ApiKeyHeaderName = "api_key";
+        private readonly IAstuteService _AstuteService = astuteService;
 
         [HttpGet("GetProductSector")]
         public async Task<Result<ProductSectorSet>> GetProductSector()
         {
-            return Result<ProductSectorSet>.Ok(await _AstuteService.GetProductSector());
+            if (HttpContext.Request.Query.TryGetValue(ApiKeyHeaderName, out var potentialApiKey))
+            {
+                return await _AstuteService.GetProductSector(potentialApiKey);
+            }
+            return Result<ProductSectorSet>.Fail("Unauthorized");
         }
 
         [HttpGet("GetProductSet/{sectorCode}")]
         public async Task<Result<ProductSet>> GetProductSet(string sectorCode)
         {
-            return Result<ProductSet>.Ok(await _AstuteService.GetProductSet(sectorCode));
+            if (HttpContext.Request.Query.TryGetValue(ApiKeyHeaderName, out var potentialApiKey))
+            {
+                return await _AstuteService.GetProductSet(potentialApiKey, sectorCode);
+            }
+            return Result<ProductSet>.Fail("Unauthorized");
         }
 
         [HttpPost("GetPortfolio")]
-        public async Task<Result<object>> GetProductSet([FromBody] PortfolioPayload payload)
-        {
-            return Result<object>.Ok(await _AstuteService.GetPortfolio(payload));
+        public async Task<Result<object>> GetPortfolio([FromBody] PortfolioPayload payload)
+        {            
+            if (HttpContext.Request.Query.TryGetValue(ApiKeyHeaderName, out var potentialApiKey))
+            {
+                return await _AstuteService.GetPortfolio(potentialApiKey, payload);
+            }
+            return Result<object>.Fail("Unauthorized");
         }
     }
 }

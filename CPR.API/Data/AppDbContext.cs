@@ -39,10 +39,6 @@ namespace CPR.API.Data
                 .HasMany(b => b.BrokerRequests)
                 .WithOne(b => b.Broker)
                 .HasForeignKey(b => b.BrokerId);
-            modelBuilder.Entity<BrokerRequest>()
-                .HasMany(a => a.AstuteRequests)
-                .WithOne(b => b.BrokerRequest)
-                .HasForeignKey(b => b.BrokerRequestId);
 
                 
 

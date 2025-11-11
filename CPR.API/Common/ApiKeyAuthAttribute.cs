@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CPR.API.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CPR.API.Common
 {
@@ -25,6 +27,7 @@ namespace CPR.API.Common
 
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
+            var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCacheService>();
             var canExclude = false;
             var apiKeys = MyCommon.GetApiKeys();
 

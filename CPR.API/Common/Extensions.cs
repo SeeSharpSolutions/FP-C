@@ -44,8 +44,23 @@ namespace CPR.API.Common
             return client;
         }
 
+        public static Broker ToBroker(this BrokerPayload value)
+        {
+            Broker broker = new();
+            if(value != null)
+            {
+                broker.Name = value.Name;
+                broker.Code = value.Code;
+                broker.FSNumber = value.FSNumber;
+                broker.ApiKey = Guid.NewGuid().ToString();
+            }
+            return broker;
+        }
+
         public static IServiceCollection AddMyDependencies(this IServiceCollection services)
         {
+            services.AddMemoryCache();
+            services.AddScoped<IMemoryCacheService, MemoryCacheService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddTransient<IAstuteService, AstuteService>();
@@ -55,6 +70,8 @@ namespace CPR.API.Common
             services.AddTransient<IPolicyService, PolicyService>();
             services.AddTransient<IVehicleService, VehicleService>();
             services.AddTransient<IAstureRequestService, AstureRequestService>();
+            services.AddTransient<IBrokerService, BrokerService>();
+            services.AddTransient<IBrokerRequestService, BrokerRequestService>();
             return services;
         }
     }

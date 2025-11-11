@@ -5,8 +5,9 @@ namespace CPR.API.Services.Interfaces
 {
     public interface IAstuteService
     {
-        Task<ProductSectorSet> GetProductSector();
-        Task<ProductSet> GetProductSet(string sectorCode);
-        Task<object> GetPortfolio(PortfolioPayload portfolioPayload);
+        Task<Result<ProductSectorSet>> GetProductSector(string key);
+        Task<Result<ProductSet>> GetProductSet(string key, string sectorCode);
+        Task<Result<object>> GetPortfolio(string key, PortfolioPayload portfolioPayload);
+        Task<CPR.API.Models.Result> RetrievePortfolios(string key, Guid msgId);
     }
 }

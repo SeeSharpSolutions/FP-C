@@ -3,6 +3,8 @@ using CPR.API.Common;
 using CPR.API.Models;
 using CPR.API.Models.DataEntities;
 using CPR.API.Services.Interfaces;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Newtonsoft.Json;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 
@@ -13,93 +15,164 @@ namespace CPR.API.Services
         private readonly IConfiguration _configuration;
         private readonly IAstureRequestService _astureRequestService;
         private readonly IClientService _clientService;
+        private readonly IBrokerRequestService _brokerRequestService;
+        IBrokerService _brokerService;
         private readonly string _username;
         private readonly string _password;
-        private readonly string _userAgent;
+        private readonly string _defaultUserAgent;
         private readonly AstuteServiceV3Client _client;
 
-        public AstuteService(IConfiguration configuration, IAstureRequestService astureRequestService, IClientService clientService)
+        public AstuteService(IConfiguration configuration
+            , IAstureRequestService astureRequestService
+            , IClientService clientService
+            , IBrokerService brokerService
+            , IBrokerRequestService brokerRequestService)
         {
             _configuration = configuration;
             _astureRequestService = astureRequestService;
             _clientService = clientService;
+            _brokerService = brokerService;
+            _brokerRequestService = brokerRequestService;
             var astuteSettings = _configuration.GetSection("Astute");
             _username = astuteSettings!["Username"];
             _password = astuteSettings!["Password"];
-            _userAgent = astuteSettings!["UserAgent"];
+            _defaultUserAgent = astuteSettings!["UserAgent"];
             _client = new AstuteServiceV3Client();
             _client.ClientCredentials.UserName.UserName = _username;
             _client.ClientCredentials.UserName.Password = _password;
         }
 
-        public async Task<object> GetPortfolio(PortfolioPayload portfolioPayload)
+        public async Task<Result<object>> GetPortfolio(string key, PortfolioPayload portfolioPayload)
         {
-            #region CCPRequest
             Guid msgId = Guid.NewGuid();
             var item = portfolioPayload.GetPortfolio();
-            using OperationContextScope scope = new(_client.InnerChannel);
-            HttpRequestMessageProperty p = new();
-            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, _userAgent);
-            OperationContext.Current.OutgoingMessageProperties.Add(HttpRequestMessageProperty.Name, p);
-            var result = await _client.PerformCcpRequestAsync(item, msgId, null);
-            string message = result?.Result?.CompletionCode.ToString();
-            #endregion CCPRequest
 
-            #region GetAddClient
-            // Get client
+            #region GetBroker
+            if (string.IsNullOrEmpty(key))
+            {
+                return Result<object>.Fail("Key cant be empty.");
+            }
+            var brokers = await _brokerService.FindAsync(x => x.ApiKey == key);
+            if(brokers == null || !brokers.Any())
+            {
+                 return Result<object>.Fail("Invalid API Key.");
+            }
+            var broker = brokers.FirstOrDefault();
+            #endregion GetBroker
+
+            #region CreateGetClient
             var clients = await _clientService.FindAsync(x => x.IdNumber == portfolioPayload.IdNumber);
             ClientInfo client = null;
-            if (clients == null || clients.Count() == 0) 
+            if (clients == null || !clients.Any())
             {
                 client = portfolioPayload.ToClient();
                 await _clientService.AddAsync(client);
                 clients = await _clientService.FindAsync(x => x.IdNumber == portfolioPayload.IdNumber);
             }
             client = clients.FirstOrDefault();
-            #endregion GetAddClient
+            #endregion CreateGetClient
 
-            #region AstuteRequest
-            AstuteRequest request = new()
-            {
-                MessageId = msgId,
-                Result = true,
-                Message = !string.IsNullOrEmpty(message) ? message : "Error Result NULL."
-            };
-            await _astureRequestService.AddAsync(request);
-            #endregion AstuteRequest
-            
-            return result;
-        }
-
-
-        public async Task<ProductSectorSet> GetProductSector()
-        {
+            #region CCPRequest
             using OperationContextScope scope = new(_client.InnerChannel);
             HttpRequestMessageProperty p = new();
-            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, _userAgent);
+            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, broker.Code);
+            OperationContext.Current.OutgoingMessageProperties.Add(HttpRequestMessageProperty.Name, p);
+            var result = await _client.PerformCcpRequestAsync(item, msgId, null);
+            string message = result?.Result?.CompletionCode.ToString();
+            #endregion CCPRequest
+
+            #region CheckForPrevRequests
+            var requests = _brokerRequestService.FindAsync(x => x.BrokerId == broker.Id && x.ClientInfoId == client.Id && !x.IsConcluded);
+            if(requests != null && requests.Result.Any())
+            {
+                foreach(var req in requests.Result)
+                {
+                    req.IsConcluded = true;
+                    await _brokerRequestService.UpdateAsync(req);
+                }
+            }
+            #endregion CheckForPrevRequests
+
+            #region CreateBrokerRequest
+            BrokerRequest brokerRequest = new()
+            {
+                BrokerId = broker.Id,
+                ClientInfoId = client.Id,
+                DateCreated = DateTime.Now,
+                Request = JsonConvert.SerializeObject(item),
+                MessageId = msgId
+            };
+            await _brokerRequestService.AddAsync(brokerRequest);
+            #endregion CreateBrokerRequest
+
+            return Result<object>.Ok(result);
+        }
+
+        public async Task<Result<ProductSectorSet>> GetProductSector(string key)
+        {
+            #region GetBroker
+            if (string.IsNullOrEmpty(key))
+            {
+                return Result<ProductSectorSet>.Fail("Key cant be empty.");
+            }
+            var brokers = await _brokerService.FindAsync(x => x.ApiKey == key);
+            if (brokers == null || !brokers.Any())
+            {
+                return Result<ProductSectorSet>.Fail("Invalid API Key.");
+            }
+            var broker = brokers.FirstOrDefault();
+            #endregion GetBroker
+            using OperationContextScope scope = new(_client.InnerChannel);
+            HttpRequestMessageProperty p = new();
+            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, broker!.Code);
             OperationContext.Current.OutgoingMessageProperties.Add(HttpRequestMessageProperty.Name, p);
             var result = await _client.GetProductSectorSetAsync();
-            return result.Data;
+            return Result<ProductSectorSet>.Ok(result.Data);
         }
 
-        public async Task<ProductSet> GetProductSet(string sectorCode)
+        public async Task<Result<ProductSet>> GetProductSet(string key, string sectorCode)
         {
+            #region GetBroker
+            if (string.IsNullOrEmpty(key))
+            {
+                return Result<ProductSet>.Fail("Key cant be empty.");
+            }
+            var brokers = await _brokerService.FindAsync(x => x.ApiKey == key);
+            if (brokers == null || !brokers.Any())
+            {
+                return Result<ProductSet>.Fail("Invalid API Key.");
+            }
+            var broker = brokers.FirstOrDefault();
+            #endregion GetBroker
             using OperationContextScope scope = new(_client.InnerChannel);
             HttpRequestMessageProperty p = new();
-            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, _userAgent);
+            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, broker.Code);
             OperationContext.Current.OutgoingMessageProperties.Add(HttpRequestMessageProperty.Name, p);
             var result = await _client.GetProductSetAsync(sectorCode);
-            
-            return result.Data;
+
+            return Result<ProductSet>.Ok(result.Data);
         }
 
-        public async Task GetHeaders(Guid msgId)
+        public async Task<CPR.API.Models.Result> RetrievePortfolios(string key, Guid msgId)
         {
+            #region GetBroker
+            if (string.IsNullOrEmpty(key))
+            {
+                return CPR.API.Models.Result.Fail("Key cant be empty.");
+            }
+            var brokers = await _brokerService.FindAsync(x => x.ApiKey == key);
+            if (brokers == null || !brokers.Any())
+            {
+                return CPR.API.Models.Result.Fail("Invalid API Key.");
+            }
+            var broker = brokers.FirstOrDefault();
+            #endregion GetBroker
             using OperationContextScope scope = new(_client.InnerChannel);
             HttpRequestMessageProperty p = new();
-            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, _userAgent);
+            p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, broker.Code);
             OperationContext.Current.OutgoingMessageProperties.Add(HttpRequestMessageProperty.Name, p);
             var result = await _client.GetMessageHeaderAsync(msgId);
+            return CPR.API.Models.Result.Ok();
         }
     }
 }
