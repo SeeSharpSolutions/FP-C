@@ -1,0 +1,25 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/CPR.API/bin/Debug/net9.0
+/.vs/ProjectEvaluation
+/.vs/CPR/DesignTimeBuild/.dtbcache.v2
+/.vs/CPR/FileContentIndex/22cde53e-c33b-4db0-8a86-12da8b7d7040.vsidx
+/.vs/CPR/FileContentIndex/67d6bd51-766b-4f18-a5b9-c462f1be61df.vsidx
+/.vs/CPR/FileContentIndex/c8f6b3fe-0f1c-4a45-bde1-3927f51d49a4.vsidx
+/.vs/CPR/FileContentIndex/cfb16ca4-702b-4fa4-ba17-48ef39ecdc28.vsidx
+/.vs/CPR/FileContentIndex/e91c6cd8-cfb5-43a4-9534-6e235d0ab422.vsidx
+/CPR.API/Migrations
+/CPR.API/obj/Debug/net9.0/CPR.API.AssemblyInfo.cs
+/CPR.API/obj/Debug/net9.0/CPR.API.AssemblyInfoInputs.cache
+/CPR.API/obj/Debug/net9.0/CPR.API.assets.cache
+/CPR.API/obj/Debug/net9.0/CPR.API.csproj.BuildWithSkipAnalyzers
+/CPR.API/obj/Debug/net9.0/CPR.API.GeneratedMSBuildEditorConfig.editorconfig
+/CPR.API/obj/Debug/net9.0/CPR.API.sourcelink.json
+/CPR.API/obj/Debug/net9.0/rpswa.dswa.cache.json
+/.vs/CPR/v17/.suo
+*.v2
+*.db-wal
+*.db-shm
+*.db
