@@ -1,4 +1,6 @@
-﻿namespace FP_C.API.Models.DataEntities
+﻿using System.Text.Json.Serialization;
+
+namespace FP_C.API.Models.DataEntities
 {
     public class VehicleInfo : BaseEntity
     {
@@ -6,7 +8,9 @@
         public string Description { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
         public string ValuePrev { get; set; } = string.Empty;
+        public DateTime? PurchaseDate { get; set; }
         public int ClientInfoId { get; set; }
+        [JsonIgnore]
         public ClientInfo ClientInfo { get; set; }
     }
 }

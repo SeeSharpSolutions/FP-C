@@ -10,10 +10,6 @@
     "namespaceMappings": [
       "*, AstuteServiceReference"
     ],
-    "references": [
-      "Microsoft.AspNetCore.OpenApi, {Microsoft.AspNetCore.OpenApi, 9.0.9}",
-      "Microsoft.OpenApi, {Microsoft.OpenApi, 1.6.17}"
-    ],
     "targetFramework": "net9.0",
     "typeReuseMode": "All"
   }

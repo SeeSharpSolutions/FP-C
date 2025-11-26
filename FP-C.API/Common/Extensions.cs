@@ -57,21 +57,38 @@ namespace FP_C.API.Common
             return broker;
         }
 
+        public static PropertyInfo ToProperty(this PropertyPayload value)
+        {
+            PropertyInfo property = new();
+            if(value != null)
+            {
+                property.PurchaseDate = value.purchaseDate;
+                property.Value = value.purchasePrice.ToString();
+                property.Name = value.buyerName;
+                property.Description = value.titleDeed;
+            }
+            return property;
+        }
+
+        public static List<PropertyInfo> ToProperty(this List<PropertyPayload> value)
+        {
+            List<PropertyInfo> properties = [];
+            if(value != null)
+            {
+                value.ForEach(x => properties.Add(x.ToProperty()));
+            }
+            return properties;
+        }
+
         public static IServiceCollection AddMyDependencies(this IServiceCollection services)
         {
             services.AddMemoryCache();
+            services.AddHttpClient<IApiService, ApiService>();
             services.AddScoped<IMemoryCacheService, MemoryCacheService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddTransient<IAstuteService, AstuteService>();
             services.AddTransient<ILightstoneService, LightstoneService>();
-            services.AddTransient<IClientService, ClientService>();
-            services.AddTransient<IPropertyService, PropertyService>();
-            services.AddTransient<IPolicyService, PolicyService>();
-            services.AddTransient<IVehicleService, VehicleService>();
-            services.AddTransient<IAstureRequestService, AstureRequestService>();
-            services.AddTransient<IBrokerService, BrokerService>();
-            services.AddTransient<IBrokerRequestService, BrokerRequestService>();
             return services;
         }
     }

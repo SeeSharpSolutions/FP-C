@@ -1,75 +1,76 @@
 ﻿using FP_C.API.Services.Interfaces;
 using RestSharp;
 using System.Net;
+using System.Text;
+using System.Text.Json;
 
 namespace FP_C.API.Services
 {
     public class ApiService : IApiService
     {
-        private readonly IConfiguration _Configuration;
-        private IRestClient _Client;
+        private readonly HttpClient _httpClient;
+        private readonly JsonSerializerOptions _jsonOptions;
 
-        public ApiService(IConfiguration configuration)
+        public ApiService(HttpClient httpClient)
         {
-            _Configuration = configuration;
+            _httpClient = httpClient;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                //PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            };
         }
 
-        public virtual async Task<string> ExecuteAsync(string basePath, string function, object payload, string key = "", Dictionary<string, string> headers = null, bool retry = true)
+        public async Task<T?> GetAsync<T>(string url, Dictionary<string, string>? headers = null)
         {
-            string content = string.Empty;
-            try
-            {
-                _Client = new RestClient(basePath);
-                RestRequest request = new(function.Trim(), Method.Post);
-                WebRequest.DefaultWebProxy = null;
-                request.AddHeader("Accept", "application/json");
-                request.AddHeader("Content-Type", "application/json");
-                if (!string.IsNullOrEmpty(key))
-                {
-                    request.AddHeader("Bearer", key);
-                }
-                if (headers != null)
-                {
-                    foreach (KeyValuePair<string, string> param in headers)
-                    {
-                        request.AddHeader(param.Key, param.Value);
-                    }                        
-                }
-                if (payload != null)
-                {
-                    request.AddJsonBody(payload);
-                }
-                    
-                var dateTimeOfRequestSend = DateTime.Now;
-                var response = await _Client.ExecuteAsync(request);
-                content = response.Content;
+            return await SendAsync<T>(HttpMethod.Get, url, null, headers);
+        }
 
-                if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Created)
-                {
-                    content = !string.IsNullOrEmpty(response.StatusDescription) ? response.StatusDescription : (!string.IsNullOrEmpty(content) ? content : "Error contacting API");
-                    if (!string.IsNullOrEmpty(response.Content))
-                    {
-                        content = content + "." + response.Content;
-                    }
-                    if(retry)
-                    {
-                        return await ExecuteAsync(basePath, function, payload, key, headers, false);
-                    }
-                    return content;
-                }
-                else
-                {
-                    return content;
-                }
-            }
-            catch (Exception ex)
+        public async Task<T?> PostAsync<T>(string url, object? body = null, Dictionary<string, string>? headers = null)
+        {
+            return await SendAsync<T>(HttpMethod.Post, url, body, headers);
+        }
+
+        public async Task<T?> PutAsync<T>(string url, object? body = null, Dictionary<string, string>? headers = null)
+        {
+            return await SendAsync<T>(HttpMethod.Put, url, body, headers);
+        }
+
+        public async Task<T?> DeleteAsync<T>(string url, Dictionary<string, string>? headers = null)
+        {
+            return await SendAsync<T>(HttpMethod.Delete, url, null, headers);
+        }
+
+        private async Task<T?> SendAsync<T>(HttpMethod method, string url, object? body, Dictionary<string, string>? headers)
+        {
+            using var request = new HttpRequestMessage(method, url);
+
+            if (headers != null)
             {
-                if(retry)
-                {
-                    return await ExecuteAsync(basePath, function, payload, key, headers, false);
-                }
+                foreach (var header in headers)
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
-            return content;
+
+            if (body != null)
+            {
+                var json = JsonSerializer.Serialize(body, _jsonOptions);
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            }
+
+            var response = await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"Request failed ({response.StatusCode}): {errorText}");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(content))
+                return default;
+
+            return JsonSerializer.Deserialize<T>(content, _jsonOptions);
         }
     }
 }

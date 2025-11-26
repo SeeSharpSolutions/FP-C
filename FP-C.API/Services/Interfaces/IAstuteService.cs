@@ -1,5 +1,6 @@
 ﻿using AstuteServiceReference;
 using FP_C.API.Models;
+using FP_C.API.Models.DataEntities;
 
 namespace FP_C.API.Services.Interfaces
 {
@@ -7,7 +8,7 @@ namespace FP_C.API.Services.Interfaces
     {
         Task<Result<ProductSectorSet>> GetProductSector(string key);
         Task<Result<ProductSet>> GetProductSet(string key, string sectorCode);
-        Task<Result<object>> GetPortfolio(string key, PortfolioPayload portfolioPayload);
+        Task<Result<ClientInfo>> GetPortfolio(string key, PortfolioPayload portfolioPayload);
         Task<Result<MessageContent>> RetrievePortfolios(string key, Guid msgId);
         Task RunRetrieval();
     }

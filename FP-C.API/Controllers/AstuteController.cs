@@ -1,6 +1,7 @@
 ﻿using AstuteServiceReference;
 using FP_C.API.Common;
 using FP_C.API.Models;
+using FP_C.API.Models.DataEntities;
 using FP_C.API.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -36,13 +37,13 @@ namespace FP_C.API.Controllers
         }
 
         [HttpPost("GetPortfolio")]
-        public async Task<Result<object>> GetPortfolio([FromBody] PortfolioPayload payload)
+        public async Task<Result<ClientInfo>> GetPortfolio([FromBody] PortfolioPayload payload)
         {            
             if (HttpContext.Request.Query.TryGetValue(ApiKeyHeaderName, out var potentialApiKey))
             {
                 return await _AstuteService.GetPortfolio(potentialApiKey, payload);
             }
-            return Result<object>.Fail("Unauthorized");
+            return Result<ClientInfo>.Fail("Unauthorized");
         }
 
         [HttpPost("RunRetrieval")]
