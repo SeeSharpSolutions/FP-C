@@ -152,7 +152,7 @@ namespace FP_C.API.Services
             var currentProperties = _prService.Find(x => x.ClientInfoId == client.Id);
             // Retieve Property Data from lightstone
             var prop = await _lightstoneService.RetrievePropertyInfo(portfolioPayload);
-            if (prop != null && prop.Count > 0)
+            /*if (prop != null)
             {
                 var properties = prop.ToProperty();
                 foreach (var property in properties)
@@ -168,7 +168,7 @@ namespace FP_C.API.Services
             }
             client.LastPropertyCheck = DateTime.Now;
             await _cService.SaveChanges();
-            await _prService.SaveChanges();
+            await _prService.SaveChanges();*/
         }
 
         public async Task UpdateVehicles(PortfolioPayload portfolioPayload, ClientInfo? client = null)

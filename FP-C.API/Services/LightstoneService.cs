@@ -16,19 +16,66 @@ namespace FP_C.API.Services
             _configuration = configuration;
         }
 
-        public async Task<List<PropertyPayload>> RetrievePropertyInfo(PortfolioPayload portfolio)
+        public async Task<object> RetrievePropertyInfo(PortfolioPayload portfolio)
         {
             //await _apiService.ExecuteAsync
             string baseUrl = _configuration.GetSection("Lightstone:property:baseUrl").Value.ToString();
             string method = _configuration.GetSection("Lightstone:property:getProperty").Value.ToString();
-            method = method.Replace("{REPLACE}", "20");
             string key = _configuration.GetSection("Lightstone:PrimaryKey").Value.ToString();
             string url = $"{baseUrl}{method}";
+            var body = new
+            {
+                maxRowsToReturn = 10,
+                ownerIdentifier = portfolio.IdNumber
+            };
             Dictionary<string, string> headers = [];
             headers.Add("Ocp-Apim-Subscription-Key", key);
-            var result = await _apiService.GetAsync<List<PropertyPayload>>(url, headers);
+            var result = await _apiService.PostAsync<object>(url, body, headers);
             return result;
         }
+
+//        {
+//    "maxRowsToReturn": 0,
+//    "propertyType": "string",
+//    "streetNumber": "string",
+//    "streetName": "string",
+//    "streetType": "string",
+//    "estateName": "string",
+//    "suburb": "string",
+//    "town": "string",
+//    "deedTown": "string",
+//    "municipality": "string",
+//    "districtCouncil": "string",
+//    "province": "string",
+//    "postCode": "string",
+//    "deedsOfficeCode": "string",
+//    "township": "string",
+//    "erfNumber": 0,
+//    "portionNumber": 0,
+//    "sectionalSchemeName": "string",
+//    "sectionalSchemeYear": 0,
+//    "sectionalSchemeNumber": 0,
+//    "sectionalSchemeUnitNumber": 0,
+//    "registrationDivision": "string",
+//    "farmNumber": 0,
+//    "farmName": "string",
+//    "holdingNumber": 0,
+//    "holdingName": "string",
+//    "ownerName": "string",
+//    "ownerIdentifier": "string",
+//    "titleDeedNumber": "string",
+//    "bondNumber": "string",
+//    "rooftopCoordinatesLongitudeX": 0,
+//    "rooftopCoordinatesLatitudeY": 0,
+//    "radius": 0,
+//    "discardNonUnique": true,
+//    "highlights": true,
+//    "explain": true,
+//    "topLeftLat": 0,
+//    "topLeftLong": 0,
+//    "bottomRightLat": 0,
+//    "bottomRightLong": 0
+//}
 
         public async Task<List<VehicleInfo>> RetrieveVehicleInfo(PortfolioPayload portfolio)
         {

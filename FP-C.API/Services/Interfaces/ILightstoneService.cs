@@ -5,7 +5,7 @@ namespace FP_C.API.Services.Interfaces
 {
     public interface ILightstoneService
     {
-        Task<List<PropertyPayload>> RetrievePropertyInfo(PortfolioPayload portfolio);
+        Task<object> RetrievePropertyInfo(PortfolioPayload portfolio);
         Task<List<VehicleInfo>> RetrieveVehicleInfo(PortfolioPayload portfolio);
     }
 }
