@@ -1,4 +1,5 @@
 ﻿using FP_C.API.Services.Interfaces;
+using Newtonsoft.Json;
 using RestSharp;
 using System.Net;
 using System.Text;
@@ -9,16 +10,10 @@ namespace FP_C.API.Services
     public class ApiService : IApiService
     {
         private readonly HttpClient _httpClient;
-        private readonly JsonSerializerOptions _jsonOptions;
 
         public ApiService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _jsonOptions = new JsonSerializerOptions
-            {
-                //PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false
-            };
         }
 
         public async Task<T?> GetAsync<T>(string url, Dictionary<string, string>? headers = null)
@@ -53,7 +48,7 @@ namespace FP_C.API.Services
 
             if (body != null)
             {
-                var json = JsonSerializer.Serialize(body, _jsonOptions);
+                var json = JsonConvert.SerializeObject(body);
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
 
@@ -70,7 +65,7 @@ namespace FP_C.API.Services
             if (string.IsNullOrWhiteSpace(content))
                 return default;
 
-            return JsonSerializer.Deserialize<T>(content, _jsonOptions);
+            return JsonConvert.DeserializeObject<T>(content);
         }
     }
 }

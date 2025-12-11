@@ -2,6 +2,12 @@
 using FP_C.API.Models.DataEntities;
 using FP_C.API.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using RestSharp;
+using System.Net;
+using System.Net.Http.Headers;
+using RestSharp;
+using FP_C.API.Models.Lightstone;
 
 namespace FP_C.API.Services
 {
@@ -16,13 +22,13 @@ namespace FP_C.API.Services
             _configuration = configuration;
         }
 
-        public async Task<object> RetrievePropertyInfo(PortfolioPayload portfolio)
+        public async Task<dynamic> RetrievePropertyInfo(PortfolioPayload portfolio)
         {
             //await _apiService.ExecuteAsync
             string baseUrl = _configuration.GetSection("Lightstone:property:baseUrl").Value.ToString();
             string method = _configuration.GetSection("Lightstone:property:getProperty").Value.ToString();
+            
             string key = _configuration.GetSection("Lightstone:PrimaryKey").Value.ToString();
-            string url = $"{baseUrl}{method}";
             var body = new
             {
                 maxRowsToReturn = 10,
@@ -30,52 +36,68 @@ namespace FP_C.API.Services
             };
             Dictionary<string, string> headers = [];
             headers.Add("Ocp-Apim-Subscription-Key", key);
-            var result = await _apiService.PostAsync<object>(url, body, headers);
+            //   MakeRequest(b);
+            var result = await _apiService.PostAsync<dynamic>($"{baseUrl}/{method}", body, headers);
             return result;
         }
 
-//        {
-//    "maxRowsToReturn": 0,
-//    "propertyType": "string",
-//    "streetNumber": "string",
-//    "streetName": "string",
-//    "streetType": "string",
-//    "estateName": "string",
-//    "suburb": "string",
-//    "town": "string",
-//    "deedTown": "string",
-//    "municipality": "string",
-//    "districtCouncil": "string",
-//    "province": "string",
-//    "postCode": "string",
-//    "deedsOfficeCode": "string",
-//    "township": "string",
-//    "erfNumber": 0,
-//    "portionNumber": 0,
-//    "sectionalSchemeName": "string",
-//    "sectionalSchemeYear": 0,
-//    "sectionalSchemeNumber": 0,
-//    "sectionalSchemeUnitNumber": 0,
-//    "registrationDivision": "string",
-//    "farmNumber": 0,
-//    "farmName": "string",
-//    "holdingNumber": 0,
-//    "holdingName": "string",
-//    "ownerName": "string",
-//    "ownerIdentifier": "string",
-//    "titleDeedNumber": "string",
-//    "bondNumber": "string",
-//    "rooftopCoordinatesLongitudeX": 0,
-//    "rooftopCoordinatesLatitudeY": 0,
-//    "radius": 0,
-//    "discardNonUnique": true,
-//    "highlights": true,
-//    "explain": true,
-//    "topLeftLat": 0,
-//    "topLeftLong": 0,
-//    "bottomRightLat": 0,
-//    "bottomRightLong": 0
-//}
+        public async Task<dynamic> RetrievePropertyValue(string propertyId)
+        {
+            //await _apiService.ExecuteAsync
+            string baseUrl = _configuration.GetSection("Lightstone:property:baseUrl").Value.ToString();
+            string method = _configuration.GetSection("Lightstone:property:getPropertyValue").Value.ToString();
+            method = method.Replace("{REPLACE}", propertyId);
+
+            string key = _configuration.GetSection("Lightstone:PrimaryKey").Value.ToString();
+            Dictionary<string, string> headers = [];
+            headers.Add("Ocp-Apim-Subscription-Key", key);
+            //   MakeRequest(b);
+            var result = await _apiService.GetAsync<dynamic>($"{baseUrl}/{method}", headers);
+            return result;
+        }
+
+        //        {
+        //    "maxRowsToReturn": 0,
+        //    "propertyType": "string",
+        //    "streetNumber": "string",
+        //    "streetName": "string",
+        //    "streetType": "string",
+        //    "estateName": "string",
+        //    "suburb": "string",
+        //    "town": "string",
+        //    "deedTown": "string",
+        //    "municipality": "string",
+        //    "districtCouncil": "string",
+        //    "province": "string",
+        //    "postCode": "string",
+        //    "deedsOfficeCode": "string",
+        //    "township": "string",
+        //    "erfNumber": 0,
+        //    "portionNumber": 0,
+        //    "sectionalSchemeName": "string",
+        //    "sectionalSchemeYear": 0,
+        //    "sectionalSchemeNumber": 0,
+        //    "sectionalSchemeUnitNumber": 0,
+        //    "registrationDivision": "string",
+        //    "farmNumber": 0,
+        //    "farmName": "string",
+        //    "holdingNumber": 0,
+        //    "holdingName": "string",
+        //    "ownerName": "string",
+        //    "ownerIdentifier": "string",
+        //    "titleDeedNumber": "string",
+        //    "bondNumber": "string",
+        //    "rooftopCoordinatesLongitudeX": 0,
+        //    "rooftopCoordinatesLatitudeY": 0,
+        //    "radius": 0,
+        //    "discardNonUnique": true,
+        //    "highlights": true,
+        //    "explain": true,
+        //    "topLeftLat": 0,
+        //    "topLeftLong": 0,
+        //    "bottomRightLat": 0,
+        //    "bottomRightLong": 0
+        //}
 
         public async Task<List<VehicleInfo>> RetrieveVehicleInfo(PortfolioPayload portfolio)
         {

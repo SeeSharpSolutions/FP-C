@@ -5,13 +5,13 @@ namespace FP_C.API.Data
 {
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public DbSet<ClientInfo> Clients { get; set; }
-        public DbSet<PropertyInfo> Properties { get; set; }
-        public DbSet<VehicleInfo> Vehicles { get; set; }
-        public DbSet<PolicyInfo> Policies { get; set; }
-        public DbSet<AstuteRequest> AstuteRequests { get; set; }
-        public DbSet<Broker> Broker { get; set; }
-        public DbSet<BrokerRequest> BrokerRequests { get; set; }
+        public DbSet<ClientInfo> Int_Clients { get; set; }
+        public DbSet<PropertyInfo> Int_Properties { get; set; }
+        public DbSet<VehicleInfo> Int_Vehicles { get; set; }
+        public DbSet<PolicyInfo> Int_Policies { get; set; }
+        public DbSet<AstuteRequest> Int_AstuteRequests { get; set; }
+        public DbSet<Broker> Int_Broker { get; set; }
+        public DbSet<BrokerRequest> Int_BrokerRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

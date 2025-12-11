@@ -24,6 +24,13 @@ namespace FP_C.API.Controllers
             return Result<ClientInfo>.Ok(await clients.FirstOrDefaultAsync());
         }
 
+        [HttpGet("GetClientByIdNumber/{idNumber}")]
+        public async Task<Result<ClientInfo>> GetClientByIdNumber(string idNumber)
+        {
+            var clients = _cService.Find(c => c.IdNumber == idNumber).Include(x => x.Policies).Include(x => x.Properties).Include(x => x.Vehicles);
+            return Result<ClientInfo>.Ok(await clients.FirstOrDefaultAsync());
+        }
+
         [HttpPost("AddClient")]
         public async Task<Result> AddClient(ClientInfo client)
         {

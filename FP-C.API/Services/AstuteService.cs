@@ -152,23 +152,31 @@ namespace FP_C.API.Services
             var currentProperties = _prService.Find(x => x.ClientInfoId == client.Id);
             // Retieve Property Data from lightstone
             var prop = await _lightstoneService.RetrievePropertyInfo(portfolioPayload);
-            /*if (prop != null)
+            if (prop != null)
             {
-                var properties = prop.ToProperty();
-                foreach (var property in properties)
+                foreach(var obj in prop.results)
                 {
-                    // Check if exists
-                    if (!currentProperties.Any(x => x.Value == property.Value && x.PurchaseDate == property.PurchaseDate))
+                    PropertyInfo pi = new()
                     {
-                        property.ClientInfo = client;
-                        property.ClientInfoId = client.Id;
-                        await _prService.AddAsync(property);
+                        Name = obj.propertyId,
+                        Description = obj.address,
+                        ClientInfoId = client.Id,
+                        ClientInfo = client
+                    };
+
+                    // Check if exists
+                    if (!currentProperties.Any(x => x.Name == pi.Name))
+                    {
+                        // Get value and add
+                        var valueResult = await _lightstoneService.RetrievePropertyValue(pi.Name);
+                       // pi.Value = valueResult.ToString();
+                        await _prService.AddAsync(pi);
                     }
                 }
             }
             client.LastPropertyCheck = DateTime.Now;
             await _cService.SaveChanges();
-            await _prService.SaveChanges();*/
+            await _prService.SaveChanges();
         }
 
         public async Task UpdateVehicles(PortfolioPayload portfolioPayload, ClientInfo? client = null)
