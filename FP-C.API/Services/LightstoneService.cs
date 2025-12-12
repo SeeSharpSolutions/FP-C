@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using RestSharp;
 using FP_C.API.Models.Lightstone;
+using FP_C.API.Data.Interfaces;
 
 namespace FP_C.API.Services
 {
@@ -15,14 +16,46 @@ namespace FP_C.API.Services
     {
         private readonly IApiService _apiService;
         private readonly IConfiguration _configuration;
+        private readonly IClientService _clientService;
+        private readonly IRepository<PropertyInfo> _prService;
 
-        public LightstoneService(IApiService apiService, IConfiguration configuration)
+        public LightstoneService(IApiService apiService, IConfiguration configuration, IClientService clientService, IRepository<PropertyInfo> prService)
         {
             _apiService = apiService;
             _configuration = configuration;
+            _clientService = clientService;
+            _prService = prService;
         }
 
-        public async Task<dynamic> RetrievePropertyInfo(PortfolioPayload portfolio)
+        public async Task UpdateProperties(int clientId, ClientInfo? client = null)
+        {
+            client ??= await _clientService.GetClientById(clientId);
+            var currentProperties = _prService.Find(x => x.ClientInfoId == client.Id);
+            // Retieve Property Data from lightstone
+            var prop = await RetrievePropertyInfo(client.IdNumber);
+            if (prop != null)
+            {
+                foreach (var obj in prop.results)
+                {
+                    PropertyInfo pi = new()
+                    {
+                        Name = obj.propertyId,
+                        Description = obj.address,
+                        ClientInfoId = client.Id,
+                        ClientInfo = client
+                    };
+                    if(!currentProperties.Any(x => x.Name == pi.Name))
+                    {
+                        await _prService.AddAsync(pi);
+                    }
+                }
+            }
+            client.LastPropertyCheck = DateTime.Now;
+            await _clientService.UpdateClient(client);
+            await _prService.SaveChanges();
+        }
+
+        public async Task<dynamic> RetrievePropertyInfo(string idNumber)
         {
             //await _apiService.ExecuteAsync
             string baseUrl = _configuration.GetSection("Lightstone:property:baseUrl").Value.ToString();
@@ -32,7 +65,7 @@ namespace FP_C.API.Services
             var body = new
             {
                 maxRowsToReturn = 10,
-                ownerIdentifier = portfolio.IdNumber
+                ownerIdentifier = idNumber
             };
             Dictionary<string, string> headers = [];
             headers.Add("Ocp-Apim-Subscription-Key", key);

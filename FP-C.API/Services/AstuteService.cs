@@ -26,6 +26,7 @@ namespace FP_C.API.Services
         private readonly string _defaultUserAgent;
         private readonly AstuteServiceV3Client _client;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IClientService _clientService;
 
         public AstuteService(IConfiguration configuration
             , IRepository<ClientInfo> cService
@@ -35,7 +36,8 @@ namespace FP_C.API.Services
             , IRepository<PropertyInfo> prService
             , IRepository<VehicleInfo> vService
             , ILightstoneService lightstoneService
-            , IServiceProvider serviceProvider)
+            , IServiceProvider serviceProvider
+            , IClientService clientService)
         {
             _configuration = configuration;
             _cService = cService;
@@ -46,6 +48,7 @@ namespace FP_C.API.Services
             _vService = vService;
             _lightstoneService = lightstoneService;
             _serviceProvider = serviceProvider;
+            _clientService = clientService;
             var astuteSettings = _configuration.GetSection("Astute");
             _username = astuteSettings!["Username"];
             _password = astuteSettings!["Password"];
@@ -74,7 +77,7 @@ namespace FP_C.API.Services
             #endregion GetBroker
 
             #region CreateGetClient
-            var client = await CreateGetClient(portfolioPayload);
+            var client = await _clientService.CreateGetClient(portfolioPayload);
             #endregion CreateGetClient
 
             #region CCPRequest
@@ -116,14 +119,6 @@ namespace FP_C.API.Services
 
             #endregion CreateBrokerRequest
 
-            #region UpdateProperties
-            await UpdateProperties(portfolioPayload, client);
-            #endregion UpdateProperties
-
-            #region UpdateVehicles
-            await UpdateVehicles(portfolioPayload, client);
-            #endregion UpdateVehicles
-
             await _cService.SaveChanges();
             var cs = _cService.Find(x => x.Id == client.Id).Include(x => x.Policies).Include(x => x.Properties).Include(x => x.Vehicles);
             client = cs != null && cs.Any() ? cs.FirstOrDefault() : client;
@@ -131,57 +126,11 @@ namespace FP_C.API.Services
             return Result<ClientInfo>.Ok(client);
         }
 
-        public async Task<ClientInfo> CreateGetClient(PortfolioPayload portfolioPayload)
-        {
-            var clients = _cService.Find(x => x.IdNumber == portfolioPayload.IdNumber);
-            ClientInfo client = null;
-            if (clients == null || !clients.Any())
-            {
-                client = portfolioPayload.ToClient();
-                await _cService.AddAsync(client);
-                await _cService.SaveChanges();
-                clients = _cService.Find(x => x.IdNumber == portfolioPayload.IdNumber);
-            }
-            client = clients != null ? clients.FirstOrDefault() : new();
-            return client!;
-        }
-
-        public async Task UpdateProperties(PortfolioPayload portfolioPayload, ClientInfo? client = null)
-        {
-            client ??= await CreateGetClient(portfolioPayload);
-            var currentProperties = _prService.Find(x => x.ClientInfoId == client.Id);
-            // Retieve Property Data from lightstone
-            var prop = await _lightstoneService.RetrievePropertyInfo(portfolioPayload);
-            if (prop != null)
-            {
-                foreach(var obj in prop.results)
-                {
-                    PropertyInfo pi = new()
-                    {
-                        Name = obj.propertyId,
-                        Description = obj.address,
-                        ClientInfoId = client.Id,
-                        ClientInfo = client
-                    };
-
-                    // Check if exists
-                    if (!currentProperties.Any(x => x.Name == pi.Name))
-                    {
-                        // Get value and add
-                        var valueResult = await _lightstoneService.RetrievePropertyValue(pi.Name);
-                       // pi.Value = valueResult.ToString();
-                        await _prService.AddAsync(pi);
-                    }
-                }
-            }
-            client.LastPropertyCheck = DateTime.Now;
-            await _cService.SaveChanges();
-            await _prService.SaveChanges();
-        }
+        
 
         public async Task UpdateVehicles(PortfolioPayload portfolioPayload, ClientInfo? client = null)
         {
-            client ??= await CreateGetClient(portfolioPayload);
+            client ??= await _clientService.CreateGetClient(portfolioPayload);
             var currentVehicles = _vService.Find(x => x.ClientInfoId == client.Id);
             var vehicles = await _lightstoneService.RetrieveVehicleInfo(portfolioPayload);
             if (vehicles != null && vehicles.Count > 0)

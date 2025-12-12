@@ -16,6 +16,7 @@ namespace FP_C.API.Controllers
         [HttpGet("GetByClient/{clientId}")]
         public async Task<Result<List<PropertyInfo>>> GetByClient(int clientId)
         {
+            await _lightstoneService.UpdateProperties(clientId);
             return Result<List<PropertyInfo>>.Ok((_pService.Find(x => x.ClientInfoId == clientId)).ToList());
         }
 

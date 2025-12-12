@@ -89,6 +89,7 @@ namespace FP_C.API.Common
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddTransient<IAstuteService, AstuteService>();
             services.AddTransient<ILightstoneService, LightstoneService>();
+            services.AddTransient<IClientService, ClientService>();
             return services;
         }
     }

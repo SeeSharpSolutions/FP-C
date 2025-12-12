@@ -13,9 +13,10 @@ namespace FP_C.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [ApiKeyAuth]
-    public class ClientController(IRepository<ClientInfo> cService) : ControllerBase
+    public class ClientController(IRepository<ClientInfo> cService, IClientService clientService) : ControllerBase
     {
         private readonly IRepository<ClientInfo> _cService = cService;
+        private readonly IClientService _clientService = clientService;
 
         [HttpGet("GetClient/{clientId}")]
         public async Task<Result<ClientInfo>> GetClient(int clientId)
@@ -35,6 +36,20 @@ namespace FP_C.API.Controllers
         public async Task<Result> AddClient(ClientInfo client)
         {
             await _cService .AddAsync(client);
+            return Result.Ok("Success");
+        }
+
+        [HttpPost("AddClientVehicle")]
+        public async Task<Result> AddClientVeicle(VehicleInfo vehicleInfo)
+        {
+            await _clientService.AddClientVehicle(vehicleInfo);
+            return Result.Ok("Success");
+        }
+
+        [HttpDelete("RemoveClientVehicle")]
+        public async Task<Result> RemoveClientVeicle(VehicleInfo vehicleInfo)
+        {
+            await _clientService.RemoveClientVehicle(vehicleInfo);
             return Result.Ok("Success");
         }
     }
