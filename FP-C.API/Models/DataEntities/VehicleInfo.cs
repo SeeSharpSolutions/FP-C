@@ -10,7 +10,5 @@ namespace FP_C.API.Models.DataEntities
         public string ValuePrev { get; set; } = string.Empty;
         public DateTime? PurchaseDate { get; set; }
         public int ClientInfoId { get; set; }
-        [JsonIgnore]
-        public ClientInfo ClientInfo { get; set; }
     }
 }

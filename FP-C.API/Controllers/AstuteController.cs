@@ -37,13 +37,13 @@ namespace FP_C.API.Controllers
         }
 
         [HttpPost("GetPortfolio")]
-        public async Task<Result<ClientInfo>> GetPortfolio([FromBody] PortfolioPayload payload)
+        public async Task<Result<ICollection<PolicyInfo>>> GetPortfolio([FromBody] PortfolioPayload payload)
         {            
             if (HttpContext.Request.Query.TryGetValue(ApiKeyHeaderName, out var potentialApiKey))
             {
                 return await _AstuteService.GetPortfolio(potentialApiKey, payload);
             }
-            return Result<ClientInfo>.Fail("Unauthorized");
+            return Result<ICollection<PolicyInfo>>.Fail("Unauthorized");
         }
 
         [HttpPost("RunRetrieval")]

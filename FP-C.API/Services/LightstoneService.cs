@@ -27,12 +27,12 @@ namespace FP_C.API.Services
             _prService = prService;
         }
 
-        public async Task UpdateProperties(int clientId, ClientInfo? client = null)
+        public async Task UpdateProperties(string clientId, Customers? client = null)
         {
             client ??= await _clientService.GetClientById(clientId);
-            var currentProperties = _prService.Find(x => x.ClientInfoId == client.Id);
+            var currentProperties = _prService.Find(x => x.ClientInfoId == client.id);
             // Retieve Property Data from lightstone
-            var prop = await RetrievePropertyInfo(client.IdNumber);
+            var prop = await RetrievePropertyInfo(client.identityNumber);
             if (prop != null)
             {
                 foreach (var obj in prop.results)
@@ -41,8 +41,7 @@ namespace FP_C.API.Services
                     {
                         Name = obj.propertyId,
                         Description = obj.address,
-                        ClientInfoId = client.Id,
-                        ClientInfo = client
+                        ClientInfoId = client.id
                     };
                     if(!currentProperties.Any(x => x.Name == pi.Name))
                     {
@@ -50,8 +49,6 @@ namespace FP_C.API.Services
                     }
                 }
             }
-            client.LastPropertyCheck = DateTime.Now;
-            await _clientService.UpdateClient(client);
             await _prService.SaveChanges();
         }
 

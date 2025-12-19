@@ -1,9 +1,11 @@
-﻿using System.Text.Json.Serialization;
+﻿using FP_C.API.Models.DataEntities;
+using System.Text.Json.Serialization;
 
-namespace FP_C.API.Models.DataEntities
+namespace FP_C.API.Models
 {
-    public class ClientInfo : BaseEntity
+    public class ClientInfo
     {
+        public int Id { get; set; }
         public string Surname { get; set; } = string.Empty;
         public string Initials { get; set; } = string.Empty;
         public string IdNumber { get; set; } = string.Empty;

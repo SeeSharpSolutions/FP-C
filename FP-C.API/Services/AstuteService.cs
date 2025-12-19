@@ -14,7 +14,6 @@ namespace FP_C.API.Services
     public class AstuteService : IAstuteService
     {
         private readonly IConfiguration _configuration;
-        private readonly IRepository<ClientInfo> _cService;
         private readonly IRepository<BrokerRequest> _brService;
         private readonly IRepository<PolicyInfo> _pService;
         private readonly IRepository<PropertyInfo> _prService;
@@ -29,7 +28,6 @@ namespace FP_C.API.Services
         private readonly IClientService _clientService;
 
         public AstuteService(IConfiguration configuration
-            , IRepository<ClientInfo> cService
             , IRepository<Broker> bService
             , IRepository<BrokerRequest> brService
             , IRepository<PolicyInfo> pService
@@ -40,7 +38,6 @@ namespace FP_C.API.Services
             , IClientService clientService)
         {
             _configuration = configuration;
-            _cService = cService;
             _bService = bService;
             _brService = brService;
             _pService = pService;
@@ -58,7 +55,7 @@ namespace FP_C.API.Services
             _client.ClientCredentials.UserName.Password = _password;
         }
 
-        public async Task<Result<ClientInfo>> GetPortfolio(string key, PortfolioPayload portfolioPayload)
+        public async Task<Result<ICollection<PolicyInfo>>> GetPortfolio(string key, PortfolioPayload portfolioPayload)
         {
             Guid msgId = Guid.NewGuid();
             var item = portfolioPayload.GetPortfolio();
@@ -66,19 +63,15 @@ namespace FP_C.API.Services
             #region GetBroker
             if (string.IsNullOrEmpty(key))
             {
-                return Result<ClientInfo>.Fail("Key cant be empty.");
+                return Result<ICollection<PolicyInfo>>.Fail("Key cant be empty.");
             }
             var brokers = _bService.Find(x => x.ApiKey == key);
             if (brokers == null || !brokers.Any())
             {
-                return Result<ClientInfo>.Fail("Invalid API Key.");
+                return Result<ICollection<PolicyInfo>>.Fail("Invalid API Key.");
             }
             var broker = brokers.FirstOrDefault();
             #endregion GetBroker
-
-            #region CreateGetClient
-            var client = await _clientService.CreateGetClient(portfolioPayload);
-            #endregion CreateGetClient
 
             #region CCPRequest
 
@@ -92,7 +85,7 @@ namespace FP_C.API.Services
             #endregion CCPRequest
 
             #region CheckForPrevRequests
-            var requests = _brService.Find(x => x.BrokerId == broker.Id && x.ClientInfoId == client.Id && !x.IsConcluded);
+            var requests = _brService.Find(x => x.BrokerId == broker.Id && x.ClientInfoId == 0 && !x.IsConcluded);
             if (requests != null && requests.Any())
             {
                 foreach (var req in requests)
@@ -109,7 +102,7 @@ namespace FP_C.API.Services
             BrokerRequest brokerRequest = new()
             {
                 BrokerId = broker.Id,
-                ClientInfoId = client.Id,
+                ClientInfoId = 0,
                 DateCreated = DateTime.Now,
                 Request = JsonConvert.SerializeObject(item),
                 MessageId = msgId
@@ -119,37 +112,7 @@ namespace FP_C.API.Services
 
             #endregion CreateBrokerRequest
 
-            await _cService.SaveChanges();
-            var cs = _cService.Find(x => x.Id == client.Id).Include(x => x.Policies).Include(x => x.Properties).Include(x => x.Vehicles);
-            client = cs != null && cs.Any() ? cs.FirstOrDefault() : client;
-
-            return Result<ClientInfo>.Ok(client);
-        }
-
-        
-
-        public async Task UpdateVehicles(PortfolioPayload portfolioPayload, ClientInfo? client = null)
-        {
-            client ??= await _clientService.CreateGetClient(portfolioPayload);
-            var currentVehicles = _vService.Find(x => x.ClientInfoId == client.Id);
-            var vehicles = await _lightstoneService.RetrieveVehicleInfo(portfolioPayload);
-            if (vehicles != null && vehicles.Count > 0)
-            {
-                foreach (var vehicle in vehicles)
-                {
-                    // Currently asuming to match it on this criteria, will adjust later
-                    if(!currentVehicles.Any(x => x.Name.ToLower() ==  vehicle.Name.ToLower() && x.PurchaseDate == vehicle.PurchaseDate))
-                    {
-                        vehicle.ClientInfo = client;
-                        vehicle.ClientInfoId = client.Id;
-                        await _vService.AddAsync(vehicle);
-                    }
-                }
-            }
-
-            client.LastVehicleCheck = DateTime.Now;
-            await _cService.SaveChanges();
-            await _vService.SaveChanges();
+            return Result<ICollection<PolicyInfo>>.Ok(null);
         }
 
         public async Task<Result<ProductSectorSet>> GetProductSector(string key)
@@ -224,7 +187,6 @@ namespace FP_C.API.Services
         {
             var openRequests = _brService.Find(x => !x.IsConcluded).ToList();
             List<PolicyInfo> clientPolicies = new();
-            ClientInfo client = null;
             Broker broker = null;
             PolicyInfo policy = null;
 
@@ -238,7 +200,6 @@ namespace FP_C.API.Services
                     {
                         req.IsConcluded = true;
                         _brService.Update(req);
-                        client = _cService.Find(x => x.Id == req.ClientInfoId).FirstOrDefault();
                         clientPolicies = _pService.Find(x => x.ClientInfoId == req.ClientInfoId).ToList();
                         foreach (var item in retrievalResult.Value.MessageBody)
                         {
@@ -266,9 +227,6 @@ namespace FP_C.API.Services
                                 _pService.Update(policy);
                             }                            
                         }
-                        client!.LastPolicyCheck = DateTime.Now;
-                        _cService.Update(client);
-                        await _cService.SaveChanges();
                         await _brService.SaveChanges();
                         await _pService.SaveChanges();
                     }

@@ -8,16 +8,18 @@ namespace FP_C.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PropertyController(IRepository<PropertyInfo> pService, ILightstoneService lightstoneService) : ControllerBase
+    public class PropertyController(IRepository<PropertyInfo> pService, IClientService cService, ILightstoneService lightstoneService) : ControllerBase
     {
         private readonly IRepository<PropertyInfo> _pService = pService;
+        private readonly IClientService _cService = cService;
         private readonly ILightstoneService _lightstoneService = lightstoneService;
 
-        [HttpGet("GetByClient/{clientId}")]
-        public async Task<Result<List<PropertyInfo>>> GetByClient(int clientId)
+        [HttpGet("GetByClient/{idNumber}")]
+        public async Task<Result<List<PropertyInfo>>> GetByClient(string idNumber)
         {
-            await _lightstoneService.UpdateProperties(clientId);
-            return Result<List<PropertyInfo>>.Ok((_pService.Find(x => x.ClientInfoId == clientId)).ToList());
+            var client = await _cService.GetClientById(idNumber);
+            await _lightstoneService.UpdateProperties(idNumber);
+            return Result<List<PropertyInfo>>.Ok((_pService.Find(x => x.ClientInfoId == client.id)).ToList());
         }
 
         [HttpGet("GetPropertyValue/{propertyId}")]

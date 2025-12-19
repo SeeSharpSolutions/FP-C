@@ -13,30 +13,16 @@ namespace FP_C.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [ApiKeyAuth]
-    public class ClientController(IRepository<ClientInfo> cService, IClientService clientService) : ControllerBase
+    public class ClientController(IClientService clientService) : ControllerBase
     {
-        private readonly IRepository<ClientInfo> _cService = cService;
         private readonly IClientService _clientService = clientService;
 
-        [HttpGet("GetClient/{clientId}")]
-        public async Task<Result<ClientInfo>> GetClient(int clientId)
-        {
-            var clients = _cService.Find(c => c.Id == clientId).Include(x => x.Policies).Include(x => x.Properties).Include(x => x.Vehicles);
-            return Result<ClientInfo>.Ok(await clients.FirstOrDefaultAsync());
-        }
-
         [HttpGet("GetClientByIdNumber/{idNumber}")]
-        public async Task<Result<ClientInfo>> GetClientByIdNumber(string idNumber)
+        public async Task<Result<Customers>> GetClientByIdNumber(string idNumber)
         {
-            var clients = _cService.Find(c => c.IdNumber == idNumber).Include(x => x.Policies).Include(x => x.Properties).Include(x => x.Vehicles);
-            return Result<ClientInfo>.Ok(await clients.FirstOrDefaultAsync());
-        }
-
-        [HttpPost("AddClient")]
-        public async Task<Result> AddClient(ClientInfo client)
-        {
-            await _cService .AddAsync(client);
-            return Result.Ok("Success");
+            
+            var clients = await _clientService.GetClientById(idNumber);
+            return Result<Customers>.Ok(clients);
         }
 
         [HttpPost("AddClientVehicle")]
@@ -47,7 +33,7 @@ namespace FP_C.API.Controllers
         }
 
         [HttpDelete("RemoveClientVehicle")]
-        public async Task<Result> RemoveClientVeicle(VehicleInfo vehicleInfo)
+        public async Task<Result> RemoveClientVehicle(VehicleInfo vehicleInfo)
         {
             await _clientService.RemoveClientVehicle(vehicleInfo);
             return Result.Ok("Success");
