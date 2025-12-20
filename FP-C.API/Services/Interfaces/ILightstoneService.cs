@@ -7,7 +7,7 @@ namespace FP_C.API.Services.Interfaces
     {
         Task UpdateProperties(string idNumer, Customers? client = null);
         Task<dynamic> RetrievePropertyInfo(string idNumber);
-        Task<dynamic> RetrievePropertyValue(string propertyId);
-        Task<List<VehicleInfo>> RetrieveVehicleInfo(PortfolioPayload portfolio);
+        Task<PropertyInfo> RetrievePropertyValue(string propertyId);
+        Task<VehicleInfo> RetrieveVehicleInfo(string idNumber, string vinNumber, bool force = false);
     }
 }

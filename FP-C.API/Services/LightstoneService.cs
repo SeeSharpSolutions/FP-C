@@ -18,13 +18,15 @@ namespace FP_C.API.Services
         private readonly IConfiguration _configuration;
         private readonly IClientService _clientService;
         private readonly IRepository<PropertyInfo> _prService;
+        private readonly IRepository<VehicleInfo> _vService;
 
-        public LightstoneService(IApiService apiService, IConfiguration configuration, IClientService clientService, IRepository<PropertyInfo> prService)
+        public LightstoneService(IApiService apiService, IConfiguration configuration, IClientService clientService, IRepository<PropertyInfo> prService, IRepository<VehicleInfo> vService)
         {
             _apiService = apiService;
             _configuration = configuration;
             _clientService = clientService;
             _prService = prService;
+            _vService = vService;
         }
 
         public async Task UpdateProperties(string clientId, Customers? client = null)
@@ -43,7 +45,7 @@ namespace FP_C.API.Services
                         Description = obj.address,
                         ClientInfoId = client.id
                     };
-                    if(!currentProperties.Any(x => x.Name == pi.Name))
+                    if (!currentProperties.Any(x => x.Name == pi.Name))
                     {
                         await _prService.AddAsync(pi);
                     }
@@ -57,7 +59,7 @@ namespace FP_C.API.Services
             //await _apiService.ExecuteAsync
             string baseUrl = _configuration.GetSection("Lightstone:property:baseUrl").Value.ToString();
             string method = _configuration.GetSection("Lightstone:property:getProperty").Value.ToString();
-            
+
             string key = _configuration.GetSection("Lightstone:PrimaryKey").Value.ToString();
             var body = new
             {
@@ -71,8 +73,13 @@ namespace FP_C.API.Services
             return result;
         }
 
-        public async Task<dynamic> RetrievePropertyValue(string propertyId)
+        public async Task<PropertyInfo> RetrievePropertyValue(string propertyId)
         {
+            var property = _prService.Find(x => x.Name == propertyId).FirstOrDefault();
+            if (!string.IsNullOrEmpty(property.Value))
+            {
+                return property;
+            }
             //await _apiService.ExecuteAsync
             string baseUrl = _configuration.GetSection("Lightstone:property:baseUrl").Value.ToString();
             string method = _configuration.GetSection("Lightstone:property:getPropertyValue").Value.ToString();
@@ -83,7 +90,16 @@ namespace FP_C.API.Services
             headers.Add("Ocp-Apim-Subscription-Key", key);
             //   MakeRequest(b);
             var result = await _apiService.GetAsync<dynamic>($"{baseUrl}/{method}", headers);
-            return result;
+            foreach (var item in result)
+            {
+                //"purchaseDate": "purchasePrice": 
+                property.Value = item.purchasePrice;
+                property.PurchaseDate = item.purchaseDate;
+                break;
+            }
+            _prService.Update(property);
+            await _prService.SaveChanges();
+            return property;
         }
 
         //        {
@@ -129,28 +145,56 @@ namespace FP_C.API.Services
         //    "bottomRightLong": 0
         //}
 
-        public async Task<List<VehicleInfo>> RetrieveVehicleInfo(PortfolioPayload portfolio)
+        public async Task<VehicleInfo> RetrieveVehicleInfo(string idnumber, string vinNumber, bool force = false)
         {
-            List<VehicleInfo> result = new()
+            var client = await _clientService.GetClientById(idnumber);
+            var existingVeh = _vService.Find(x => x.Name == vinNumber && x.ClientInfoId == client.id);
+            if (existingVeh != null && existingVeh.Count() > 0 && !force)
             {
-                new()
-                {
-                    Name = "Chery",
-                    Description = "Tiggo 4 Pro",
-                    PurchaseDate = new DateTime(2022,2,2),
-                    Value = "180000",
-                    ValuePrev = "320000"
-                },
-                new()
-                {
-                    Name = "Toyota",
-                    Description = "Yaris Spirit",
-                    PurchaseDate = new DateTime(2009,6,20),
-                    Value = "43250",
-                    ValuePrev = "175000"
-                }
+                return existingVeh.FirstOrDefault();
+            }
+
+            // get token
+            string tokenUrl = _configuration.GetSection("Lightstone:Vehicle:tokenUrl").Value;
+            string getVehicleUrl = _configuration.GetSection("Lightstone:Vehicle:getVehicleUrl").Value;
+            string toGetToken = _configuration.GetSection("Lightstone:Vehicle:toGetToken").Value;
+
+            Dictionary<string, string> headers = [];
+            headers.Add("Authorization", "Basic cmFqZXNocGF0Y2hhbGFAZ21haWwuY29tOkxpZ2h0JHRvbmUxMjM0JA==");
+            var token = await _apiService.PostAsync<MyToken>(tokenUrl, null, headers);
+            // get vehicle
+            var obj = new
+            {
+                ClientPackageId = "1639fde6-03f7-4c65-99f3-aa67868ae02f",
+                VinNumber = vinNumber
             };
-            return result;
+            Dictionary<string, string> headers2 = [];
+            
+            headers2.Add("Authorization", $"Bearer {token.Token}");
+            var result = await _apiService.PostAsync<dynamic>(getVehicleUrl, obj, headers2);
+            string str = JsonConvert.SerializeObject(result);
+            VehicleInfo vi = new()
+            {
+                Name = vinNumber,
+                ClientInfoId = client.id
+            };
+            foreach(var item in result)
+            {
+                if (item.Category == "General" && item.Description == "Full Model Description")
+                {
+                    vi.Description = item.Value;
+                }
+                if(item.EstimateType == "Trade" && item.Category == "Valuation" && item.Description == "Trade Estimate")
+                {
+                    vi.Value = item.Value;
+                }
+            }
+            if(vi.Value != null)
+            {
+                await _vService.AddAsync(vi);
+                await _vService.SaveChanges();
+            }
+            return vi;
         }
     }
 }

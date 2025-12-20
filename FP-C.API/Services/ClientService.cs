@@ -23,24 +23,11 @@ namespace FP_C.API.Services
             await _vService.SaveChanges();
         }
 
-        public async Task<Customers> CreateGetClient(PortfolioPayload portfolioPayload)
-        {
-            var clients = _cService.Find(x => x.identityNumber == portfolioPayload.IdNumber);
-            var client = clients != null ? clients.FirstOrDefault() : new();
-            return client!;
-        }
-
         public async Task<Customers> GetClientById(string id)
         {
             var clients = _cService.Find(x => x.identityNumber == id);
             var client = clients != null ? clients.FirstOrDefault() : new();
             return client!;
-        }
-
-        public async Task RemoveClientVehicle(VehicleInfo vehicleInfo)
-        {
-            _vService.Remove(vehicleInfo);
-            await _vService.SaveChanges();
         }
     }
 }

@@ -55,10 +55,10 @@ namespace FP_C.API.Services
             _client.ClientCredentials.UserName.Password = _password;
         }
 
-        public async Task<Result<ICollection<PolicyInfo>>> GetPortfolio(string key, PortfolioPayload portfolioPayload)
+        public async Task<Result<ICollection<PolicyInfo>>> GetPortfolio(string key, string idNumber)
         {
+            
             Guid msgId = Guid.NewGuid();
-            var item = portfolioPayload.GetPortfolio();
 
             #region GetBroker
             if (string.IsNullOrEmpty(key))
@@ -72,9 +72,24 @@ namespace FP_C.API.Services
             }
             var broker = brokers.FirstOrDefault();
             #endregion GetBroker
+            var client = await _clientService.GetClientById(idNumber);
+            #region GetCustomer
+
+            #endregion Getcustomer
 
             #region CCPRequest
-
+            CcpRequestDetails item = new()
+            {
+                IdNumber = idNumber,
+                Surname = client.surname,
+                Initials = client.firstName.Length > 0 ? client.firstName.Substring(1) : string.Empty,
+                EmailAddress = client.emailAddress,
+                OverrideDigitalConsent = true,
+                IdType = IdType.SouthAfrican,
+                DateOfBirth = client.dob,
+                CellNumber = client.mobileNumber,
+                RequestDetails = MyCommon.GetAllProviders()
+            };
             using OperationContextScope scope = new(_client.InnerChannel);
             HttpRequestMessageProperty p = new();
             p.Headers.Add(System.Net.HttpRequestHeader.UserAgent, broker.Code);
@@ -85,7 +100,7 @@ namespace FP_C.API.Services
             #endregion CCPRequest
 
             #region CheckForPrevRequests
-            var requests = _brService.Find(x => x.BrokerId == broker.Id && x.ClientInfoId == 0 && !x.IsConcluded);
+            var requests = _brService.Find(x => x.BrokerId == broker.Id && x.ClientInfoId == client.id && !x.IsConcluded);
             if (requests != null && requests.Any())
             {
                 foreach (var req in requests)
@@ -102,7 +117,7 @@ namespace FP_C.API.Services
             BrokerRequest brokerRequest = new()
             {
                 BrokerId = broker.Id,
-                ClientInfoId = 0,
+                ClientInfoId = client.id,
                 DateCreated = DateTime.Now,
                 Request = JsonConvert.SerializeObject(item),
                 MessageId = msgId
@@ -112,6 +127,7 @@ namespace FP_C.API.Services
 
             #endregion CreateBrokerRequest
 
+            await RunRetrieval();
             return Result<ICollection<PolicyInfo>>.Ok(null);
         }
 
@@ -194,42 +210,42 @@ namespace FP_C.API.Services
             {
                 broker = _bService.Find(x => x.Id == req.BrokerId).FirstOrDefault();
                 var retrievalResult = await RetrievePortfolios(broker.ApiKey, req.MessageId);
+
+                string str = Newtonsoft.Json.JsonConvert.SerializeObject(retrievalResult);
                 if (retrievalResult.IsSuccess)
                 {
-                    if (retrievalResult.Value.MessageHeader.TimestampCompleted != null)
+                    req.IsConcluded = true;
+                    _brService.Update(req);
+                    clientPolicies = _pService.Find(x => x.ClientInfoId == req.ClientInfoId).ToList();
+                    foreach (var item in retrievalResult.Value.MessageBody)
                     {
-                        req.IsConcluded = true;
-                        _brService.Update(req);
-                        clientPolicies = _pService.Find(x => x.ClientInfoId == req.ClientInfoId).ToList();
-                        foreach (var item in retrievalResult.Value.MessageBody)
+                        var descItem = MyCommon.ResultCodes.FirstOrDefault(x => x.Key == item.Value);
+                        string descString = string.Empty;
+                        if (descItem.Key != null && descItem.Value != null)
                         {
-                            var descItem = MyCommon.ResultCodes.FirstOrDefault(x => x.Key == item.Value);
-                            string descString = string.Empty;
-                            if (descItem.Key != null && descItem.Value != null)
-                            {
-                                descString = $"{descItem.Key} - {descItem.Value}";
-                            }
-                            else descString = "N/A"; 
-                            if(!clientPolicies.Any(x => x.Name == item.ProviderCode))
-                            {                                
-                                policy = new()
-                                {
-                                    ClientInfoId = req.ClientInfoId,
-                                    Name = item.ProviderCode,
-                                    Description = descItem.Value ?? string.Empty
-                                };
-                                await _pService.AddAsync(policy);
-                            }
-                            else if(clientPolicies.Any(x => x.Name == item.ProviderCode && x.Description != descString))
-                            {
-                                policy = clientPolicies.FirstOrDefault(x => x.Name == item.ProviderCode && x.Description != descString);
-                                policy.Description = descString;
-                                _pService.Update(policy);
-                            }                            
+                            descString = $"{descItem.Key} - {descItem.Value}";
                         }
-                        await _brService.SaveChanges();
-                        await _pService.SaveChanges();
+                        else descString = "N/A";
+                        if (!clientPolicies.Any(x => x.Name == item.ProviderCode))
+                        {
+                            policy = new()
+                            {
+                                ClientInfoId = req.ClientInfoId,
+                                Name = item.ProviderCode,
+                                Description = descItem.Value ?? string.Empty
+                            };
+                            await _pService.AddAsync(policy);
+                        }
+                        else if (clientPolicies.Any(x => x.Name == item.ProviderCode && x.Description != descString))
+                        {
+                            policy = clientPolicies.FirstOrDefault(x => x.Name == item.ProviderCode && x.Description != descString);
+                            policy.Description = descString;
+                            _pService.Update(policy);
+                        }
                     }
+                    await _brService.SaveChanges();
+                    await _pService.SaveChanges();
+
                 }
             }
         }

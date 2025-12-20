@@ -24,19 +24,5 @@ namespace FP_C.API.Controllers
             var clients = await _clientService.GetClientById(idNumber);
             return Result<Customers>.Ok(clients);
         }
-
-        [HttpPost("AddClientVehicle")]
-        public async Task<Result> AddClientVeicle(VehicleInfo vehicleInfo)
-        {
-            await _clientService.AddClientVehicle(vehicleInfo);
-            return Result.Ok("Success");
-        }
-
-        [HttpDelete("RemoveClientVehicle")]
-        public async Task<Result> RemoveClientVehicle(VehicleInfo vehicleInfo)
-        {
-            await _clientService.RemoveClientVehicle(vehicleInfo);
-            return Result.Ok("Success");
-        }
     }
 }

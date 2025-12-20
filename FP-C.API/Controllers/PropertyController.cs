@@ -1,4 +1,5 @@
-﻿using FP_C.API.Data.Interfaces;
+﻿using FP_C.API.Common;
+using FP_C.API.Data.Interfaces;
 using FP_C.API.Models;
 using FP_C.API.Models.DataEntities;
 using FP_C.API.Services.Interfaces;
@@ -8,6 +9,7 @@ namespace FP_C.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ApiKeyAuth]
     public class PropertyController(IRepository<PropertyInfo> pService, IClientService cService, ILightstoneService lightstoneService) : ControllerBase
     {
         private readonly IRepository<PropertyInfo> _pService = pService;
@@ -23,9 +25,9 @@ namespace FP_C.API.Controllers
         }
 
         [HttpGet("GetPropertyValue/{propertyId}")]
-        public async Task<Result<object>> GetPropertyValue(string propertyId)
+        public async Task<Result<PropertyInfo>> GetPropertyValue(string propertyId)
         {            
-            return Result<object>.Ok((_lightstoneService.RetrievePropertyValue(propertyId)));
+            return Result<PropertyInfo>.Ok((await _lightstoneService.RetrievePropertyValue(propertyId)));
         }
     }
 }

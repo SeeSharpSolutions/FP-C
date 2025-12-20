@@ -5,7 +5,7 @@ namespace FP_C.API.Common
 {
     public class MyCommon
     {
-        private static Dictionary<string,string> _ResultCodes;
+        private static Dictionary<string, string> _ResultCodes;
         public static Dictionary<string, string> ResultCodes
         {
             get
@@ -76,29 +76,94 @@ namespace FP_C.API.Common
         {
             return
             [
-                new ProviderDetail() { ProviderCode = "AMAS" },
-                new ProviderDetail() { ProviderCode = "ABSA" },
-                new ProviderDetail() { ProviderCode = "DSL" },
-                new ProviderDetail() { ProviderCode = "FMI" },
-                new ProviderDetail() { ProviderCode = "ALT" },
-                new ProviderDetail() { ProviderCode = "LIB" },
-                new ProviderDetail() { ProviderCode = "MOM" },
-                new ProviderDetail() { ProviderCode = "NGL" },
-                new ProviderDetail() { ProviderCode = "OMU" },
-                new ProviderDetail() { ProviderCode = "SLMNA" },
-                new ProviderDetail() { ProviderCode = "PPS" },
-                new ProviderDetail() { ProviderCode = "SLM" },
-                new ProviderDetail() { ProviderCode = "FNB" },
-                new ProviderDetail() { ProviderCode = "AG" },
-                new ProviderDetail() { ProviderCode = "OMGP" },
-                new ProviderDetail() { ProviderCode = "DSI" },
-                new ProviderDetail() { ProviderCode = "MOMW" },
-                new ProviderDetail() { ProviderCode = "OMGP" },
-                new ProviderDetail() { ProviderCode = "STLB" },
-                new ProviderDetail() { ProviderCode = "SET" },
-                new ProviderDetail() { ProviderCode = "INN8" },
-                new ProviderDetail() { ProviderCode = "MOME" },
-                new ProviderDetail() { ProviderCode = "SANE" }
+                new ProviderDetail() {ProviderCode="ABSA Life"},
+                new ProviderDetail() {ProviderCode="Assupol"},
+                new ProviderDetail() {ProviderCode="Bidvest Life"},
+                new ProviderDetail() {ProviderCode="Discovery Life"},
+                new ProviderDetail() {ProviderCode="FNB"},
+                new ProviderDetail() {ProviderCode="Hollard Life"},
+                new ProviderDetail() {ProviderCode="Liberty Group Limited"},
+                new ProviderDetail() {ProviderCode="Metropolitan"},
+                new ProviderDetail() {ProviderCode="Momentum"},
+                new ProviderDetail() {ProviderCode="Nedbank Insurance"},
+                new ProviderDetail() {ProviderCode="Old Mutual South Africa"},
+                new ProviderDetail() {ProviderCode="PPS"},
+                new ProviderDetail() {ProviderCode="Sanlam"},
+                new ProviderDetail() {ProviderCode="Unit Test -Assupol"},
+                new ProviderDetail() {ProviderCode="UnitTest - Assupol Investment"},
+                new ProviderDetail() {ProviderCode="UnitTest- ABSA Life"},
+                new ProviderDetail() {ProviderCode="UnitTest- Discovery Life"},
+                new ProviderDetail() {ProviderCode=" UnitTest- Hollard Life"},
+                new ProviderDetail() {ProviderCode=" UnitTest- Metropolitan"},
+                new ProviderDetail() {ProviderCode=" UnitTest- Momentum"},
+                new ProviderDetail() {ProviderCode="UnitTest- Nedbank Insurance"},
+                new ProviderDetail() {ProviderCode=" UnitTest- Old Mutual"},
+                new ProviderDetail() {ProviderCode=" UnitTest- PPS"},
+                new ProviderDetail() {ProviderCode="UnitTest- Sanlam"},
+                new ProviderDetail() {ProviderCode="UnitTest- Sanlam Namibia"},
+                new ProviderDetail() {ProviderCode=" UnitTest-Bidvest Life"},
+                new ProviderDetail() {ProviderCode=" UnitTest-Liberty Group LTD"},
+                new ProviderDetail() {ProviderCode="Allan Gray (Manco & LISP)"},
+                new ProviderDetail() {ProviderCode="Assupol Investment"},
+                new ProviderDetail() {ProviderCode="Discovery Invest"},
+                new ProviderDetail() {ProviderCode="INN8"},
+                new ProviderDetail() {ProviderCode="Momentum Wealth"},
+                new ProviderDetail() {ProviderCode=" Old Mutual Wealth and Unit Trusts"},
+                new ProviderDetail() {ProviderCode="STANLIB"},
+                new ProviderDetail() {ProviderCode=" UnitTest - Discovery Invest"},
+                new ProviderDetail() {ProviderCode=" UnitTest- Allan Gray"},
+                new ProviderDetail() {ProviderCode=" UnitTest- Momentum Wealth"},
+                new ProviderDetail() {ProviderCode=" UnitTest- STANLIB"},
+                new ProviderDetail() {ProviderCode=" UnitTest-Old Mutual Wealth and Unit Trusts"},
+                new ProviderDetail() {ProviderCode=" Sanlam Collective Investments"},
+                new ProviderDetail() {ProviderCode=" UnitTest- Sanlam Collective Unit Trusts"}
+                //new ProviderDetail() {ProviderCode="METL"},
+                //new ProviderDetail() {ProviderCode="MOML"},
+                //new ProviderDetail() {ProviderCode="LIBL"},
+                //new ProviderDetail() {ProviderCode="STLBL"},
+                //new ProviderDetail() {ProviderCode="SETL"},
+
+                //new ProviderDetail() {ProviderCode="DSIL"},
+                //new ProviderDetail() {ProviderCode="PPSL"},
+                //new ProviderDetail() {ProviderCode="SLML"},
+                //new ProviderDetail() {ProviderCode="MOMWL"},
+                //new ProviderDetail() {ProviderCode="FMIL"},
+                
+                //new ProviderDetail() {ProviderCode="Old Mutual"},
+                //new ProviderDetail() {ProviderCode="Liberty Group Limited"},
+                //new ProviderDetail() {ProviderCode="Momentum"},
+                //new ProviderDetail() {ProviderCode="Metropolitan"},
+                //new ProviderDetail() {ProviderCode="Discovery Life"},
+                
+                //new ProviderDetail() {ProviderCode="Sanlam Collective Investments"},
+                //new ProviderDetail() {ProviderCode="Old Mutual Wealth and Unit Trusts"},
+                //new ProviderDetail() {ProviderCode="Professional Provident Society"},
+                //new ProviderDetail() {ProviderCode="Hollard Life"},
+                //new ProviderDetail() {ProviderCode="Momentum Wealth"},
+                
+                //new ProviderDetail() {ProviderCode="STANLIB"},
+                //new ProviderDetail() {ProviderCode="Allan Gray (Manco & LISP)"},
+                //new ProviderDetail() {ProviderCode="ABSA Life"},
+                //new ProviderDetail() {ProviderCode="Sanlam"},
+                //new ProviderDetail() {ProviderCode="Discovery Invest"},
+                
+                //new ProviderDetail() {ProviderCode="Nedbank Insurance"},
+                //new ProviderDetail() {ProviderCode="ALTL"},
+                //new ProviderDetail() {ProviderCode="NGLL"},
+                //new ProviderDetail() {ProviderCode="OMUL"},
+                //new ProviderDetail() {ProviderCode="OMGPL"},
+                
+                //new ProviderDetail() {ProviderCode="AGL"},
+                //new ProviderDetail() {ProviderCode="ABSAL"},
+                //new ProviderDetail() {ProviderCode="SLMNL"},
+                //new ProviderDetail() {ProviderCode="Bidvest Life"},
+                //new ProviderDetail() {ProviderCode="Assupol"},
+                
+                //new ProviderDetail() {ProviderCode="Assupol Investment"},
+                //new ProviderDetail() {ProviderCode="ASPIL"},
+                //new ProviderDetail() {ProviderCode="INN8"},
+                //new ProviderDetail() {ProviderCode="First National Bank"},
+                //new ProviderDetail() {ProviderCode="DSLL"}
             ];
         }
 
