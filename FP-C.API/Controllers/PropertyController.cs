@@ -29,5 +29,11 @@ namespace FP_C.API.Controllers
         {            
             return Result<PropertyInfo>.Ok((await _lightstoneService.RetrievePropertyValue(propertyId)));
         }
+
+        [HttpGet("GetPropertyCurrentValue/{propertyId}")]
+        public async Task<Result<PropertyInfo>> GetPropertyCurrentValue(string propertyId)
+        {
+            return Result<PropertyInfo>.Ok((await _lightstoneService.RetrieveCurrentPropertyValue(propertyId)));
+        }
     }
 }

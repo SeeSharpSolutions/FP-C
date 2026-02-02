@@ -3,11 +3,13 @@ using FP_C.API.Common;
 using FP_C.API.Data.Interfaces;
 using FP_C.API.Models;
 using FP_C.API.Models.DataEntities;
+using FP_C.API.Models.XMLData;
 using FP_C.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
+using System.Xml.Serialization;
 
 namespace FP_C.API.Services
 {
@@ -82,7 +84,7 @@ namespace FP_C.API.Services
             {
                 IdNumber = idNumber,
                 Surname = client.surname,
-                Initials = client.firstName.Length > 0 ? client.firstName.Substring(1) : string.Empty,
+                Initials = client.firstName.Length > 0 ? client.firstName.Substring(0,1) : string.Empty,
                 EmailAddress = client.emailAddress,
                 OverrideDigitalConsent = true,
                 IdType = IdType.SouthAfrican,
@@ -219,29 +221,44 @@ namespace FP_C.API.Services
                     clientPolicies = _pService.Find(x => x.ClientInfoId == req.ClientInfoId).ToList();
                     foreach (var item in retrievalResult.Value.MessageBody)
                     {
-                        var descItem = MyCommon.ResultCodes.FirstOrDefault(x => x.Key == item.Value);
-                        string descString = string.Empty;
-                        if (descItem.Key != null && descItem.Value != null)
+                        if(!string.IsNullOrEmpty(item.Value) && item.Value.Length >= 5)
                         {
-                            descString = $"{descItem.Key} - {descItem.Value}";
-                        }
-                        else descString = "N/A";
-                        if (!clientPolicies.Any(x => x.Name == item.ProviderCode))
-                        {
-                            policy = new()
+                            try
                             {
-                                ClientInfoId = req.ClientInfoId,
-                                Name = item.ProviderCode,
-                                Description = descItem.Value ?? string.Empty
-                            };
-                            await _pService.AddAsync(policy);
+                                XmlSerializer serializer = new XmlSerializer(typeof(OLifE));
+                                using (StringReader reader = new StringReader(item.Value))
+                                {
+                                    var test = (OLifE)serializer.Deserialize(reader);
+                                }
+                            }
+                            catch(Exception ex)
+                            {
+
+                            }                             
                         }
-                        else if (clientPolicies.Any(x => x.Name == item.ProviderCode && x.Description != descString))
-                        {
-                            policy = clientPolicies.FirstOrDefault(x => x.Name == item.ProviderCode && x.Description != descString);
-                            policy.Description = descString;
-                            _pService.Update(policy);
-                        }
+                        //var descItem = MyCommon.ResultCodes.FirstOrDefault(x => x.Key == item.Value);
+                        //string descString = string.Empty;
+                        //if (descItem.Key != null && descItem.Value != null)
+                        //{
+                        //    descString = $"{descItem.Key} - {descItem.Value}";
+                        //}
+                        //else descString = "N/A";
+                        //if (!clientPolicies.Any(x => x.Name == item.ProviderCode))
+                        //{
+                        //    policy = new()
+                        //    {
+                        //        ClientInfoId = req.ClientInfoId,
+                        //        Name = item.ProviderCode,
+                        //        Description = descItem.Value ?? string.Empty
+                        //    };
+                        //    await _pService.AddAsync(policy);
+                        //}
+                        //else if (clientPolicies.Any(x => x.Name == item.ProviderCode && x.Description != descString))
+                        //{
+                        //    policy = clientPolicies.FirstOrDefault(x => x.Name == item.ProviderCode && x.Description != descString);
+                        //    policy.Description = descString;
+                        //    _pService.Update(policy);
+                        //}
                     }
                     await _brService.SaveChanges();
                     await _pService.SaveChanges();

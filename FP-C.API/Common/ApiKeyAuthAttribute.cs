@@ -1,7 +1,6 @@
 ﻿using FP_C.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace FP_C.API.Common
 {

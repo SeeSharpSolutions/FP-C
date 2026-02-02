@@ -1,5 +1,4 @@
-﻿using FP_C.API.Models;
-using FP_C.API.Models.DataEntities;
+﻿using FP_C.API.Models.DataEntities;
 
 namespace FP_C.API.Services.Interfaces
 {
@@ -9,5 +8,6 @@ namespace FP_C.API.Services.Interfaces
         Task<dynamic> RetrievePropertyInfo(string idNumber);
         Task<PropertyInfo> RetrievePropertyValue(string propertyId);
         Task<VehicleInfo> RetrieveVehicleInfo(string idNumber, string vinNumber, bool force = false);
+        Task<PropertyInfo> RetrieveCurrentPropertyValue(string propertyId, bool forceRefresh = false);
     }
 }

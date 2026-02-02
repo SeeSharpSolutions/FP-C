@@ -196,5 +196,40 @@ namespace FP_C.API.Services
             }
             return vi;
         }
+
+        public async Task<PropertyInfo> RetrieveCurrentPropertyValue(string propertyId, bool forceRefresh = false)
+        {
+            var property = _prService.Find(x => x.Name == propertyId).FirstOrDefault();
+            if (property != null && !string.IsNullOrEmpty(property.ValueCurrent) && !forceRefresh)
+            {
+                return property;
+            }
+            //await _apiService.ExecuteAsync
+            string baseUrl = _configuration.GetSection("Lightstone:property:baseUrl").Value.ToString();
+            string method = _configuration.GetSection("Lightstone:property:getPropertyCurrentValue").Value.ToString();
+            method = method.Replace("{REPLACE}", propertyId);
+
+            string key = _configuration.GetSection("Lightstone:PrimaryKey").Value.ToString();
+            Dictionary<string, string> headers = [];
+            headers.Add("Ocp-Apim-Subscription-Key", key);
+            //   MakeRequest(b);
+            var result = await _apiService.GetAsync<dynamic>($"{baseUrl}/{method}", headers);
+            if(property == null)
+            {
+                property = new()
+                {
+                    Name = propertyId,
+                    ValueCurrent = result.predictedValue
+                };
+                await _prService.AddAsync(property);
+            }
+            else
+            {
+                property.ValueCurrent = result.predictedValue;
+                _prService.Update(property);
+            }
+            await _prService.SaveChanges();
+            return property;
+        }
     }
 }
